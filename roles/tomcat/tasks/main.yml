@@ -1,0 +1,57 @@
+---
+# tasks file for tomcat
+- name: Install Java 1.8
+  yum: name=java-1.8.0-openjdk state=present
+
+- name: add group "tomcat"
+  group: name=tomcat
+
+- name: add user "tomcat"
+  user: name=tomcat group=tomcat home=/usr/share/tomcat createhome=no
+  become: True
+  become_method: sudo
+
+- name: Download Tomcat
+  get_url: url=https://www-eu.apache.org/dist/tomcat/tomcat-7/v7.0.92/bin/apache-tomcat-7.0.92.tar.gz  dest=/opt/apache-tomcat-7.0.13.tar.gz
+
+- name: Creates directory
+  file: path=/opt/tomcat state=directory
+
+#- name: Extract archive
+#  command: /bin/tar xvf /opt/apache-tomcat-7.0.13.tar.gz  -C /opt/tomcat creates=/opt/tomcat
+
+- name: Extract foo.tgz into /var/lib/foo
+  unarchive:
+    src: /opt/apache-tomcat-7.0.13.tar.gz
+    dest: /opt/tomcat/
+    extra_opts: [--strip-components=1]
+    remote_src: yes
+
+- name: Change ownership of Tomcat installation
+  file: path=/opt/tomcat/ owner=tomcat group=tomcat state=directory recurse=yes
+
+- name: Configure Tomcat server
+  template: src=server.xml dest=/opt/tomcat/conf/
+  notify: restart tomcat
+
+- name: Configure Tomcat users
+  template: src=tomcat-users.xml dest=/opt/tomcat/conf/
+  notify: restart tomcat
+
+- name: Install Tomcat init script
+  copy: src=tomcat.service dest=/etc/systemd/system/  mode=0755
+
+- name: just force systemd to reread configs (2.4 and above)
+  systemd:
+    daemon_reload: yes
+
+- name: Make sure a service is running
+  systemd:
+    state: started
+    name: tomcat
+
+#- name: Start Tomcat
+#  service: name=tomcat state=started enabled=yes
+
+#- name: wait for tomcat to start
+#  wait_for: port={{http_port}}

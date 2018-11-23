@@ -1,0 +1,27 @@
+---
+# tasks file for maven
+- name: Download Apache Maven 
+  get_url: url=http://mirrors.fibergrid.in/apache/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz dest=/opt/apache-maven-3.6.0-bin.tar.gz
+
+
+- name: Creates directory
+  file: path=/opt/maven_3.6 state=directory
+
+
+- name: Extract foo.tgz into /var/lib/foo
+  unarchive:
+    src: /opt/apache-maven-3.6.0-bin.tar.gz
+    dest: /opt/maven_3.6/
+    extra_opts: [--strip-components=1]
+    remote_src: yes
+
+- name: alternatives link created
+  alternatives:
+    name: mvn
+    link: /usr/bin/mvn 
+    path: /opt/maven_3.6/bin/mvn
+    priority: 1001
+
+
+#- name: Update path for maven use
+#  shell: export PATH=$PATH:/opt/maven_3.6/bin
